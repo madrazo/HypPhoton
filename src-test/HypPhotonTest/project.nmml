@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	
+	<meta title="HypPhotonTest" package="io.nme.samples.displayingabitmap" version="1.0.0" company="NME" />
+	<app main="Main" path="Export" file="HypPhotonTest" />
+	
+	<source path="Source" />
+	
+	<haxelib name="nme" />
+
+	<!--<haxelib name="inthebox-macros" />-->
+	<haxelib name="HypPhoton" />
+
+	<assets path="Assets" rename="assets" exclude="nme.svg" />
+	<icon path="Assets/nme.svg" />
+	
+</project>

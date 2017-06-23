@@ -75,6 +75,8 @@ extern "C"{
 
 	static value HypPhoton_connect( value sHost ){
 		printf("connect\n");
+		float d = 1.00;
+		float crash =  10.0/(d-1.0);
 		HypPhoton::Instance().connect( val_string( sHost ) );
 		return alloc_null( );
 	}
@@ -107,6 +109,13 @@ extern "C"{
 	}
 	DEFINE_PRIM( HypPhoton_joinRandom_room , 1 );
 
+	static value HypPhoton_joinOrCreate_room( value iMax ){
+		printf("HypPhoton_joinOrCreate_room %i\n",val_int( iMax));
+		HypPhoton::Instance( ).joinOrCreate_room( val_int( iMax ) );
+		return alloc_null( );
+	}
+	DEFINE_PRIM( HypPhoton_joinOrCreate_room , 1 );
+
 	static value HypPhoton_createRoom( value sName , value iMax ){
 		printf("createRoom with %s %d players max\n",val_string( sName ) , val_int( iMax) );
 		HypPhoton::Instance( ).createRoom( val_string( sName ) , val_int( iMax ) );
@@ -121,11 +130,11 @@ extern "C"{
 	}
 	DEFINE_PRIM( HypPhoton_send , 1 );
 
-	static value HypPhoton_setUser_name( value sName ){
-		HypPhoton::Instance( ).setUser_name( val_string( sName ) );
+	static value HypPhoton_setUser_name( value sName, value index ){
+		HypPhoton::Instance( ).setUser_name( val_string( sName ), val_int( index ) );
 		return alloc_null( );
 	}
-	DEFINE_PRIM( HypPhoton_setUser_name , 1 );
+	DEFINE_PRIM( HypPhoton_setUser_name , 2 );
 
 	static value HypPhoton_getState( ){
 		return alloc_string( HypPhoton::Instance( ).getState( ) );

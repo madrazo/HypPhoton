@@ -48,9 +48,12 @@
     <files id="win_desktop">
         <compilerflag value="-Iinclude"/>
         <compilerflag value="-Iwindows/include"/>
+    <!--
         <compilerflag value="-Iwindows/photon-common"/>
         <compilerflag value="-Iwindows/photon-core"/>
         <compilerflag value="-Iwindows/photon-loadbalancing"/>
+    -->
+        <compilerflag value="-Iwindows/photon"/>
         <file name="common/ExternalInterface.cpp"/>
         <file name="common/HypPhoton.cpp"/>
      </files>
@@ -71,9 +74,14 @@
         <outdir name="../ndll/${BINDIR}" />
 
         <!-- Windows -->
-        <lib if="windows" name="../libs/windows/release/Common-cpp_release_win32.lib"/>
+        <!--<lib if="windows" name="../libs/windows/release/Common-cpp_release_win32.lib"/>
         <lib if="windows" name="../libs/windows/release/Photon-cpp_release_win32.lib"/>
-        <lib if="windows" name="../libs/windows/release/LoadBalancing-cpp_release_win32.lib"/>
+        <lib if="windows" name="../libs/windows/release/LoadBalancing-cpp_release_win32.lib"/>-->
+
+        <lib if="windows" name="windows/photon/Chat-cpp/lib/Chat-cpp_vc14_release_windows_mt_Win32.lib"/>
+        <lib if="windows" name="windows/photon/Common-cpp/lib/Common-cpp_vc14_release_windows_mt_Win32.lib"/>
+        <lib if="windows" name="windows/photon/LoadBalancing-cpp/lib/LoadBalancing-cpp_vc14_release_windows_mt_Win32.lib"/>
+        <lib if="windows" name="windows/photon/Photon-cpp/lib/Photon-cpp_vc14_release_windows_mt_Win32.lib"/>
 
         <!-- Android -->
         <lib if="android" name="../libs/android/debug/libcommon-cpp-static_debug_android_armeabi.a"/>

@@ -3,7 +3,7 @@
  * http://www.exitgames.com
  * mailto:developer@exitgames.com
  */
-
+/*
 #ifndef __PEER_STATES_H
 #define __PEER_STATES_H
 
@@ -38,9 +38,9 @@ namespace ExitGames
 				Disconnecting,
 				Disconnected,
 			};
-			/** @file */
 		}
 	}
 }
 
 #endif
+*/

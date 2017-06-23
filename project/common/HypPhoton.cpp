@@ -1,7 +1,12 @@
 #include "HypPhoton.h"
-#include "LoadBalancingClient.h"
-#include "LoadBalancingPlayer.h"
+//#include "LoadBalancingClient.h"
+//#include "LoadBalancingPlayer.h"
 //#include "LitePeer.h"
+
+//#include "LoadBalancing-cpp/inc/Listener.h"
+#include "LoadBalancing-cpp/inc/Client.h"
+#include "LoadBalancing-cpp/inc/Player.h"
+//#include "Common-cpp/inc/Enums/DebugLevel.h"
 
 const unsigned char MESSAGE = 0;
 
@@ -59,10 +64,19 @@ extern "C"{
 HypPhoton HypPhoton::m_instance=HypPhoton();
 
 //public -----------------------------------------------------------------------------------------
+#	include <Mmsystem.h>
+#	define GETTIMEMS() static_cast<int>(GetTickCount64())
+//static const ExitGames::Common::JString PLAYER_NAME = "user";
 
 void HypPhoton::connect( const char *sHost ){
 	printf("HypPhoton::connect %s\n",sHost );
-	mLoadBalancingClient.connect( sHost );
+	//mLoadBalancingClient.connect( sHost );
+	ExitGames::LoadBalancing::AuthenticationValues authenticationValues;
+	authenticationValues.setUserID(ExitGames::Common::JString()+GETTIMEMS());
+	//ExitGames::Common::JString serverAddress(sHost);
+	//unsigned char serverType = 0; //(0:Name, 1:Master)
+
+	mLoadBalancingClient.connect(authenticationValues, ExitGames::Common::JString(L"user")+GETTIMEMS() /*, serverAddress, serverType*/);
 }
 
 void HypPhoton::disconnect( ){
@@ -70,8 +84,9 @@ void HypPhoton::disconnect( ){
 	mLoadBalancingClient.disconnect( );
 }
 
-void HypPhoton::setUser_name( const char *sUser_name ){
-	mLoadBalancingClient.getCurrentlyJoinedRoom( ).getLocalPlayer( ).setName( sUser_name );
+void HypPhoton::setUser_name( const char *sUser_name, int n ){
+	//TODO
+	//mLoadBalancingClient.getCurrentlyJoinedRoom( ).getPlayerForNumber( n )->setName( sUser_name );
 }
 
 void HypPhoton::start( ){
@@ -104,10 +119,26 @@ void HypPhoton::joinRandom_room( int maxPlayers ){
    	mLoadBalancingClient.opJoinRandomRoom( roomProperties, maxPlayers );
 }
 
+void HypPhoton::joinOrCreate_room( int maxPlayers ){
+	printf("joinOrCreate_room %i, TODO room name\n",maxPlayers );
+
+	ExitGames::Common::Hashtable 	roomProperties;
+    							//roomProperties.put("map", "aap");
+
+   	mLoadBalancingClient.opJoinOrCreateRoom( L"Basic" );
+}
+
 void HypPhoton::createRoom( const char *sRoom_name , int maxPlayers ){
 	printf("createRoom with %d max players\n",maxPlayers);
 	//ExitGames::Common::JString tmp;
-   	mLoadBalancingClient.opCreateRoom( sRoom_name , true , true , maxPlayers );
+	//opCreateRoom(
+		//const Common::JString& gameID, 
+		ExitGames::LoadBalancing::RoomOptions options;
+		options.setMaxPlayers(maxPlayers);
+
+		//const Common::JVector<Common::JString>& expectedUsers=Common::JVector<Common::JString>());
+   	//mLoadBalancingClient.opCreateRoom( sRoom_name , true , true , maxPlayers );
+   	mLoadBalancingClient.opCreateRoom( sRoom_name , options );
 }
 
 
@@ -135,8 +166,8 @@ const char * HypPhoton::getState( void ){
 		case ExitGames::LoadBalancing::PeerStates::Connected:
 			return "Connected";
 
-		case ExitGames::LoadBalancing::PeerStates::Queued:
-			return "Queued";
+		//case ExitGames::LoadBalancing::PeerStates::Queued:
+		//	return "Queued";
 
 		case ExitGames::LoadBalancing::PeerStates::Authenticated:
 			return "Authenticated";
@@ -177,8 +208,8 @@ const char * HypPhoton::getState( void ){
 		case ExitGames::LoadBalancing::PeerStates::ConnectedComingFromGameserver:
 			return "ConnectedComingFromGameserver";
 
-		case ExitGames::LoadBalancing::PeerStates::QueuedComingFromGameserver:
-			return "QueuedComingFromGameserver";
+		//case ExitGames::LoadBalancing::PeerStates::QueuedComingFromGameserver:
+		//	return "QueuedComingFromGameserver";
 
 		case ExitGames::LoadBalancing::PeerStates::AuthenticatedComingFromGameserver:
 			return "AuthenticatedComingFromGameserver";
@@ -200,7 +231,7 @@ void HypPhoton::hideRoom( void ){
 }
 
 const char * HypPhoton::getRoom_desc( void ){
-	return mLoadBalancingClient.getCurrentlyJoinedRoom( ).toString( ).UTF8Representation( );
+	return mLoadBalancingClient.getCurrentlyJoinedRoom( ).toString( true, true, true ).UTF8Representation( );
 }
 
 const char * HypPhoton::getRoom_players( void ){
@@ -211,7 +242,9 @@ const char * HypPhoton::getRoom_players( void ){
 		//printf("%i::::::::::::::: s %s\n",i,mLoadBalancingClient.getCurrentlyJoinedRoom( ).getPlayers( )[i].getName( ).cstr( ) );
 		if(i != 0)
     			res = res + "|||";
-  			res = res + mLoadBalancingClient.getCurrentlyJoinedRoom( ).getPlayers( )[i].getName( );//.cstr( );
+  			//res = res + mLoadBalancingClient.getCurrentlyJoinedRoom( ).getPlayers( )[i].getName( );//.cstr( );
+  			res = res + mLoadBalancingClient.getCurrentlyJoinedRoom( ).getPlayerForNumber( i )->getName( );//.cstr( );
+  			
 	}
 
 	return res.UTF8Representation( );
@@ -228,13 +261,25 @@ HypPhoton::HypPhoton()
 #	pragma warning(push)
 #endif
 	//: mLoadBalancingClient(*this, L"f0350eac-4528-41d7-b0e8-0621a46429e8", L"1.0", PLAYER_NAME ) //PHOTON v1.1
-	: mLoadBalancingClient(*this, L"83496486-a66a-48f6-b4e1-6501fb22d5d1", L"1.0", PLAYER_NAME ) //PHOTON v1.2
+	//: mLoadBalancingClient(*this, L"83496486-a66a-48f6-b4e1-6501fb22d5d1", L"1.0", PLAYER_NAME ) //PHOTON v1.2
 	//: mLoadBalancingClient(*this, L"11f9de03-946a-4af8-8895-0d285495d2be", L"1.0", PLAYER_NAME ) //DEV
+
+//	: mLoadBalancingClient(*this, L"83496486-a66a-48f6-b4e1-6501fb22d5d1", L"1.0" /*, Photon::ConnectionProtocol::DEFAULT, autoLobbyStats=false, nByte regionSelectionMode=RegionSelectionMode::DEFAULT*/)
+	: mLoadBalancingClient(*this, L"187207a6-289f-4c86-8fc4-862f41406bbb", L"1.0", ExitGames::Photon::ConnectionProtocol::UDP/*Photon::ConnectionProtocol::DEFAULT*/, true /*autoLobbyStats=false, nByte regionSelectionMode=RegionSelectionMode::DEFAULT*/)
+
 #ifdef _EG_MS_COMPILER
 #	pragma warning(pop)
 #endif
 {
-    	printf("constructor\n");
+    	printf("constructor*\n");
+
+    	//swt
+    mLoadBalancingClient.setDebugOutputLevel(DEBUG_RELEASE(ExitGames::Common::DebugLevel::INFO, ExitGames::Common::DebugLevel::WARNINGS)); // that instance of LoadBalancingClient and its implementation details
+	mLogger.setListener(*this);
+	mLogger.setDebugOutputLevel(DEBUG_RELEASE(ExitGames::Common::DebugLevel::INFO, ExitGames::Common::DebugLevel::WARNINGS)); // this class
+	ExitGames::Common::Base::setListener(this);
+	ExitGames::Common::Base::setDebugOutputLevel(DEBUG_RELEASE(ExitGames::Common::DebugLevel::INFO, ExitGames::Common::DebugLevel::WARNINGS)); // all classes that inherit from Base
+
 }
 
 HypPhoton::~HypPhoton(){
@@ -252,7 +297,8 @@ void HypPhoton::clientErrorReturn(int errorCode){
 	onEvent( CLIENT_ERROR , errorCode+"" );
 }
 
-void HypPhoton::connectReturn(int errorCode, const ExitGames::Common::JString& errorString){
+
+void HypPhoton::connectReturn(int errorCode, const ExitGames::Common::JString& errorString, const ExitGames::Common::JString& cluster){
 	printf("HypPhoton::connectReturn\n");
 	if( errorCode ){
 		printf("HypPhoton::connectReturn error %ls\n",errorString.cstr( ));
@@ -273,7 +319,7 @@ void HypPhoton::createRoomReturn(int localPlayerNr, const ExitGames::Common::Has
 	printf("createRoomReturn\n");
 
 	if( errorCode ){
-		printf("createRoomReturn() failed: %s\n", errorString.cstr( ));
+		printf("createRoomReturn() failed: %S\n", errorString.cstr( ));
 		//onStatus( 1050 );
 		onEvent( CREATE_ROOM_ERROR , errorString.UTF8Representation( ) );
 		return;
@@ -281,34 +327,38 @@ void HypPhoton::createRoomReturn(int localPlayerNr, const ExitGames::Common::Has
 	printf("game room has been successfully created\n");
 	onEvent( CREATE_ROOM_SUCCESS , mLoadBalancingClient.getCurrentlyJoinedRoom().getName().UTF8Representation( ) );
 }
+			
 
-void HypPhoton::customEventAction(int playerNr, nByte eventCode, const ExitGames::Common::Hashtable& datas){
+void HypPhoton::customEventAction(int playerNr, nByte eventCode, const ExitGames::Common::Object& eventContent){
 	//datas.getValue( 0 );
 	//printf("customEventAction\n");
-	using ExitGames::Common::ValueObject;
-	ExitGames::Common::JString value = ValueObject<ExitGames::Common::JString>(datas.getValue( 100 )).getDataCopy();
+	//using ExitGames::Common::ValueObject;
+	//ExitGames::Common::JString value = ValueObject<ExitGames::Common::JString>(datas.getValue( 100 )).getDataCopy();
 	//printf("response%s\n",value.UTF8Representation( ) );
-	onEvent( EVENT , value.UTF8Representation( ));
+	//onEvent( EVENT , value.UTF8Representation( ));
+	onEvent( EVENT , eventContent.toString(NULL).UTF8Representation( ));
+
+
 }
 
-void HypPhoton::debugReturn(ExitGames::Common::DebugLevel::DebugLevel debugLevel, const ExitGames::Common::JString& string){
+void HypPhoton::debugReturn(int debugLevel, const ExitGames::Common::JString& string){
 	onEvent( DEBUG_RETURN , string.UTF8Representation( ) );
 }
 
-void HypPhoton::debugReturn(const ExitGames::Common::JString& string){
-	printf("HypPhoton::debugReturn %s\n",string.cstr( ));
-	onEvent( DEBUG_RETURN , string.UTF8Representation( ) );
-}
+//void HypPhoton::debugReturn(const ExitGames::Common::JString& string){
+//	printf("HypPhoton::debugReturn %S\n",string.cstr( ));
+//	onEvent( DEBUG_RETURN , string.UTF8Representation( ) );
+//}
 
 void HypPhoton::disconnectReturn(void){
 	printf("HypPhoton::disconnectReturn\n");
 	onEvent( DISCONNECT_RETURN , "" );
 }
 
-void HypPhoton::gotQueuedReturn(void){
-	printf("HypPhoton::gotQueuedReturn\n");
-	onEvent( GOT_QUEUE_RETURN , "" );
-}
+//void HypPhoton::gotQueuedReturn(void){
+//	printf("HypPhoton::gotQueuedReturn\n");
+//	onEvent( GOT_QUEUE_RETURN , "" );
+//}
 
 void HypPhoton::joinLobbyReturn(void){
 	printf("HypPhoton::joinLobbyReturn\n");
@@ -318,7 +368,7 @@ void HypPhoton::joinLobbyReturn(void){
 void HypPhoton::joinRandomRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& gameProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString){
 	printf("joinRandomRoomReturn\n");
 	if( errorCode ){
-		printf("opJoinRandomRoom() failed: %s\n", errorString.cstr( ));
+		printf("opJoinRandomRoom() failed: %S\n", errorString.cstr( ));
 		onEvent( JOIN_RANDOM_ROOM_ERROR , errorString.UTF8Representation( ));
 		return;
 	}
@@ -328,6 +378,17 @@ void HypPhoton::joinRandomRoomReturn(int localPlayerNr, const ExitGames::Common:
 
 void HypPhoton::joinRoomEventAction(int playerNr, const ExitGames::Common::JVector<int>& playernrs, const ExitGames::LoadBalancing::Player& player){
 	onEvent( PLAYER_JOINED_ROOM , player.getName( ).UTF8Representation( ) );
+}
+
+	
+void HypPhoton::joinOrCreateRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& gameProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString){
+	printf("joinOrCreateRoomReturn()\n");
+
+	if( errorCode ){
+		onEvent( JOIN_ROOM_ERROR , errorString.UTF8Representation( ) );
+		return;
+	}
+	onEvent( JOIN_ROOM_SUCCESS , mLoadBalancingClient.getCurrentlyJoinedRoom().getName().UTF8Representation( ) );
 }
 
 void HypPhoton::joinRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& gameProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString){
@@ -345,7 +406,8 @@ void HypPhoton::leaveLobbyReturn(void){
 	onEvent( LOBBY_LEAVE , "" );
 }
 
-void HypPhoton::leaveRoomEventAction(int playerNr){
+void HypPhoton::leaveRoomEventAction(int playerNr, bool isInactive){
+//void HypPhoton::leaveRoomEventAction(int playerNr){
 	printf("leaveRoomEventAction\n");
 	/*
 	printf("playerName %s\n", mLoadBalancingClient.getCurrentlyJoinedRoom( ).getPlayers( )[ playerNr ].getName( ).UTF8Representation( ));

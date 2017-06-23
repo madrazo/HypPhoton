@@ -4,9 +4,15 @@
 #include <stdio.h>
 #include <sstream>
 
-#include "LoadBalancingListener.h"
-#include "LoadBalancingClient.h"
-#include "LoadBalancingPlayer.h"
+//#include "LoadBalancingListener.h"
+//#include "LoadBalancingClient.h"
+//#include "LoadBalancingPlayer.h"
+
+#include "LoadBalancing-cpp/inc/Listener.h"
+#include "LoadBalancing-cpp/inc/Client.h"
+#include "LoadBalancing-cpp/inc/Player.h"
+//#include "Common-cpp/inc/Enums/DebugLevel.h"
+
 #include "PeerStates.h"
 
 #define CLIENT_ERROR			"CLIENT_ERROR"
@@ -31,6 +37,9 @@
 #define SERVER_WARNING			"SERVER_WARNING"
 #define EVENT			 		"EVENT"
 
+//using namespace ExitGames;
+//using namespace ExitGames::LoadBalancing;
+
 class HypPhoton : private ExitGames::LoadBalancing::Listener{
 
 	public:
@@ -39,9 +48,10 @@ class HypPhoton : private ExitGames::LoadBalancing::Listener{
 		void disconnect( );
 		void update( void );
 		void joinRandom_room( int maxPlayers );
+		void joinOrCreate_room( int maxPlayers );
 		void createRoom( const char *sName , int maxPlayers );
 		void send( const char *sText );
-		void setUser_name( const char *sUser_name );
+		void setUser_name( const char *sUser_name, int n );
 		const char * getState( void );
 		void hideRoom( void );
 		void joinLobby( void );
@@ -58,26 +68,74 @@ class HypPhoton : private ExitGames::LoadBalancing::Listener{
 		~HypPhoton( );
 		static HypPhoton m_instance;
 		const char * convert( int code );
-		virtual void clientErrorReturn(int errorCode);
+
+		// receive and print out debug out here
+			virtual void debugReturn(int debugLevel, const ExitGames::Common::JString& string);
+
+			// implement your error-handling here
+			virtual void connectionErrorReturn(int errorCode);
+			virtual void clientErrorReturn(int errorCode);
+			virtual void warningReturn(int warningCode);
+			virtual void serverErrorReturn(int errorCode);
+
+			// events, triggered by certain operations of all players in the same room
+			virtual void joinRoomEventAction(int playerNr, const ExitGames::Common::JVector<int>& playernrs, const ExitGames::LoadBalancing::Player& player);
+			virtual void leaveRoomEventAction(int playerNr, bool isInactive);//
+
+			virtual void customEventAction(int playerNr, nByte eventCode, const ExitGames::Common::Object& eventContent);//
+
+		// callbacks for operations on server
+			virtual void connectReturn(int errorCode, const ExitGames::Common::JString& errorString, const ExitGames::Common::JString& cluster);
+			virtual void disconnectReturn(void);
+			virtual void createRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& roomProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
+    		virtual void joinOrCreateRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& roomProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
+			virtual void joinRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& roomProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
+			virtual void joinRandomRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& roomProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
+			virtual void leaveRoomReturn(int errorCode, const ExitGames::Common::JString& errorString);
+			virtual void joinLobbyReturn(void);
+			virtual void leaveLobbyReturn(void);
+/**///			virtual void onFindFriendsResponse(void) {}
+/**///			virtual void onLobbyStatsResponse(const ExitGames::Common::JVector<LobbyStatsResponse>& /*lobbyStats*/) {}
+/**///			virtual void webRpcReturn(int /*errorCode*/, const ExitGames::Common::JString& /*errorString*/, const ExitGames::Common::JString& /*uriPath*/, int /*resultCode*/, const ExitGames::Common::Dictionary<ExitGames::Common::Object, ExitGames::Common::Object>& /*returnData*/) {}
+
+#if 0
+			// info, that certain values have been updated
+			virtual void onRoomListUpdate(void) {}
+			virtual void onRoomPropertiesChange(const ExitGames::Common::Hashtable& /*changes*/) {}
+			virtual void onPlayerPropertiesChange(int /*playerNr*/, const ExitGames::Common::Hashtable& /*changes*/) {}
+			virtual void onAppStatsUpdate(void) {}
+			virtual void onLobbyStatsUpdate(const ExitGames::Common::JVector<LobbyStatsResponse>& /*lobbyStats*/) {}
+			virtual void onCacheSliceChanged(int /*cacheSliceIndex*/) {}
+			// custom authentication
+			virtual void onCustomAuthenticationIntermediateStep(const ExitGames::Common::Dictionary<ExitGames::Common::JString, ExitGames::Common::Object>& /*customResponseData*/){}
+
+			// receive available server regions during connect workflow (if you have specified in the constructor, that you want to select a region)
+			virtual void onAvailableRegions(const ExitGames::Common::JVector<ExitGames::Common::JString>& /*availableRegions*/, const ExitGames::Common::JVector<ExitGames::Common::JString>& /*availableRegionServers*/){}
+
+			virtual void onSecretReceival(const ExitGames::Common::JString& /*secret*/){}
+#endif
+
+#if 0
 		virtual void connectReturn(int errorCode, const ExitGames::Common::JString& errorString);
-		virtual void connectionErrorReturn(int errorCode);
+
 		virtual void createRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& gameProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
-		virtual void customEventAction(int playerNr, nByte eventCode, const ExitGames::Common::Hashtable& eventContent);
-		virtual void debugReturn(ExitGames::Common::DebugLevel::DebugLevel debugLevel, const ExitGames::Common::JString& string);
-		virtual void debugReturn(const ExitGames::Common::JString& string);
+//		virtual void customEventAction(int playerNr, nByte eventCode, const ExitGames::Common::Hashtable& eventContent);
+//		virtual void debugReturn(ExitGames::Common::DebugLevel::DebugLevel debugLevel, const ExitGames::Common::JString& string);
+//		virtual void debugReturn(const ExitGames::Common::JString& string);
 		virtual void disconnectReturn(void);
 		virtual void gotQueuedReturn(void);
 		virtual void joinLobbyReturn(void);
 		virtual void joinRandomRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& gameProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
-		virtual void joinRoomEventAction(int playerNr, const ExitGames::Common::JVector<int>& playernrs, const ExitGames::LoadBalancing::Player& player);
+//		virtual void joinRoomEventAction(int playerNr, const ExitGames::Common::JVector<int>& playernrs, const ExitGames::LoadBalancing::Player& player);
 		virtual void joinRoomReturn(int localPlayerNr, const ExitGames::Common::Hashtable& gameProperties, const ExitGames::Common::Hashtable& playerProperties, int errorCode, const ExitGames::Common::JString& errorString);
 		virtual void leaveLobbyReturn(void);
-		virtual void leaveRoomEventAction(int playerNr);
+//		virtual void leaveRoomEventAction(int playerNr);
 		virtual void leaveRoomReturn(int errorCode, const ExitGames::Common::JString& errorString);
-		virtual void serverErrorReturn(int errorCode);
-		virtual void warningReturn(int warningCode);
+#endif
 
 		ExitGames::LoadBalancing::Client mLoadBalancingClient;
+
+		ExitGames::Common::Logger mLogger;
 
 };
 #endif
